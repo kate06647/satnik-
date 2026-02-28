@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Můj Šatník">
+<title>Můj Šatník</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#EFF4FB; --surface:#FFFFFF; --surface2:#DDEAF8;
+    --accent:#2563EB; --accent2:#1E40AF;
+    --text:#0A0F1E; --text2:#374151; --text3:#6B7280;
+    --danger:#DC2626; --success:#16A34A; --border:#BFDBFE;
+    --shadow:rgba(37,99,235,.08); --shadow2:rgba(37,99,235,.18);
+    --radius:16px; --radius-sm:10px;
+    --nav-h:72px; --header-h:60px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{width:100%;height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+  #app{display:flex;flex-direction:column;height:100dvh;height:100vh}
+  #header{height:var(--header-h);background:#0A0F1E;border-bottom:none;display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;z-index:10}
+  #header-title{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;letter-spacing:.5px;color:#fff}
+  #header-title span{font-style:italic;color:#93C5FD}
+  .header-btn{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.12);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;transition:transform .15s;color:#fff}
+  .header-btn:active{transform:scale(.92)}
+  #content{flex:1;overflow:hidden;position:relative}
+  .page{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:14px 14px calc(var(--nav-h)+16px);display:none;animation:fadeIn .25s ease}
+  .page.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  #nav{height:var(--nav-h);background:#0A0F1E;border-top:none;display:flex;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom)}
+  .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:none;background:transparent;cursor:pointer;color:rgba(255,255,255,.35);padding:8px 0;transition:color .15s}
+  .nav-btn.active{color:#60A5FA}
+  .nav-btn svg{width:22px;height:22px}
+  .nav-btn span{font-size:10px;font-weight:500;letter-spacing:.3px}
+
+  /* CATEGORY ROWS */
+  .cat-scroll{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none}
+  .cat-scroll::-webkit-scrollbar{display:none}
+  .cat-chip{white-space:nowrap;padding:7px 13px;border-radius:20px;font-size:13px;font-weight:500;border:1.5px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .15s;flex-shrink:0}
+  .cat-chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  .cat-chip.parent-active{background:#0A0F1E;border-color:#0A0F1E;color:#60A5FA}
+  .subcat-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none;padding-left:2px}
+  .subcat-scroll::-webkit-scrollbar{display:none}
+  .subcat-chip{white-space:nowrap;padding:5px 12px;border-radius:16px;font-size:12px;font-weight:500;border:1.5px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .15s;flex-shrink:0}
+  .subcat-chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+  /* GRID */
+  .clothes-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .clothes-grid.list-view{grid-template-columns:1fr}
+  .cloth-card{background:var(--surface);border-radius:var(--radius);overflow:hidden;box-shadow:0 2px 12px var(--shadow);cursor:pointer;transition:transform .15s;position:relative}
+  .cloth-card:active{transform:scale(.97)}
+  .cloth-img{width:100%;aspect-ratio:3/4;object-fit:cover;background:var(--surface2);display:block}
+  .cloth-img-placeholder{width:100%;aspect-ratio:3/4;background:linear-gradient(135deg,#DDEAF8,#BFDBFE);display:flex;align-items:center;justify-content:center;font-size:36px}
+  .cloth-info{padding:9px 11px 11px}
+  .cloth-name{font-size:13px;font-weight:500;color:var(--text)}
+  .cloth-cat{font-size:11px;color:var(--text3);margin-top:2px}
+  .cloth-season-dot{position:absolute;top:8px;right:8px;width:8px;height:8px;border-radius:50%}
+  .cloth-worn{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.5);color:#fff;font-size:10px;padding:2px 6px;border-radius:10px;backdrop-filter:blur(4px)}
+  .clothes-grid.list-view .cloth-card{display:flex;align-items:center}
+  .clothes-grid.list-view .cloth-img,.clothes-grid.list-view .cloth-img-placeholder{width:70px;aspect-ratio:1;font-size:24px;flex-shrink:0}
+  .clothes-grid.list-view .cloth-info{flex:1}
+
+  /* SECTION */
+  .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .section-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--text);letter-spacing:.2px}
+  .section-sub{font-size:12px;color:var(--text3);margin-top:2px}
+  .small-btn{font-size:12px;padding:6px 14px;border-radius:20px;background:#0A0F1E;color:#fff;border:none;cursor:pointer;font-weight:500}
+  .empty-state{text-align:center;padding:48px 24px;color:var(--text3)}
+  .empty-state .empty-icon{font-size:56px;margin-bottom:16px}
+  .empty-state h3{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--text2);margin-bottom:8px}
+  .empty-state p{font-size:14px;line-height:1.6}
+
+  /* STATS */
+  .stats-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+  .stat-card{background:var(--surface);border-radius:var(--radius);padding:16px;box-shadow:0 2px 8px var(--shadow);border-left:3px solid var(--accent)}
+  .stat-num{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600;color:#0A0F1E}
+  .stat-label{font-size:12px;color:var(--text3);margin-top:2px}
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .bar-cat{font-size:12px;color:var(--text2);min-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar-track{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
+  .bar-fill{height:100%;background:var(--accent);border-radius:4px;transition:width .6s}
+  .bar-num{font-size:11px;color:var(--text3);min-width:20px;text-align:right}
+  .top-worn-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+  .top-worn-card{flex-shrink:0;width:88px;background:var(--surface);border-radius:var(--radius-sm);overflow:hidden;box-shadow:0 2px 8px var(--shadow)}
+  .top-worn-img{width:100%;height:88px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden}
+  .top-worn-img img{width:100%;height:100%;object-fit:cover}
+  .top-worn-name{font-size:11px;padding:5px 7px;color:var(--text2);font-weight:500}
+  .top-worn-count{font-size:10px;padding:0 7px 5px;color:var(--text3)}
+
+  /* WISHLIST */
+  .wish-card{background:var(--surface);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;box-shadow:0 2px 8px var(--shadow);display:flex;align-items:center;gap:12px}
+  .wish-emoji{font-size:26px}
+  .wish-info{flex:1}
+  .wish-name{font-weight:500;font-size:14px}
+  .wish-detail{font-size:12px;color:var(--text3);margin-top:2px}
+  .wish-price{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--accent);font-weight:600}
+  .wish-check{width:28px;height:28px;border-radius:50%;background:var(--surface2);border:none;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+  .wish-check.done{background:var(--success)}
+
+  /* OUTFITS */
+  .outfit-card{background:var(--surface);border-radius:var(--radius);padding:14px;margin-bottom:12px;box-shadow:0 2px 12px var(--shadow)}
+  .outfit-title{font-weight:500;font-size:15px;color:var(--text);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+  .outfit-pieces{display:flex;gap:8px;flex-wrap:wrap}
+  .outfit-piece{width:58px;height:58px;border-radius:10px;background:var(--surface2);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:22px}
+  .outfit-piece img{width:100%;height:100%;object-fit:cover}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:flex-end;backdrop-filter:blur(4px);animation:fadeIn .2s ease}
+  .modal-overlay.hidden{display:none}
+  .modal-sheet{background:var(--bg);border-radius:24px 24px 0 0;padding:20px 20px calc(32px + env(safe-area-inset-bottom));width:100%;max-height:92vh;overflow-y:auto;animation:slideUp .3s ease}
+  @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .modal-handle{width:40px;height:4px;border-radius:2px;background:var(--border);margin:0 auto 20px}
+  .modal-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;margin-bottom:20px;color:var(--text)}
+
+  /* FORM */
+  .form-group{margin-bottom:15px}
+  .form-label{font-size:11px;font-weight:500;color:var(--text2);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:.5px}
+  .form-input,.form-select,.form-textarea{width:100%;padding:12px 14px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:15px;color:var(--text);outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none}
+  .form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent)}
+  .form-textarea{resize:none;height:80px}
+  .form-select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237A6A55' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+
+  /* PHOTO */
+  .photo-upload{width:100%;aspect-ratio:4/3;background:var(--surface2);border:2px dashed var(--border);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;margin-bottom:12px;max-height:200px;overflow:hidden;position:relative}
+  .photo-upload img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .photo-upload-icon{font-size:30px}
+  .photo-upload-text{font-size:13px;color:var(--text3)}
+  .photo-btns{display:flex;gap:10px;margin-bottom:14px}
+  .photo-btn{flex:1;padding:10px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface);font-size:13px;color:var(--text2);font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+  .photo-btn:active{background:var(--surface2)}
+
+  /* SUBCAT PICKER IN FORM */
+  .subcat-picker{display:flex;flex-wrap:wrap;gap:7px}
+  .subcat-pick-chip{padding:6px 13px;border-radius:16px;border:1.5px solid var(--border);background:var(--surface);font-size:13px;color:var(--text2);cursor:pointer;transition:all .15s}
+  .subcat-pick-chip.selected{background:var(--accent);border-color:var(--accent);color:#fff}
+
+  /* COLOR */
+  .color-row{display:flex;flex-wrap:wrap;gap:8px}
+  .color-option{width:30px;height:30px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .15s;position:relative}
+  .color-option.selected{border-color:var(--text);transform:scale(1.15)}
+  .color-option.selected::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:white;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+  .color-dot{width:12px;height:12px;border-radius:50%;border:1.5px solid rgba(0,0,0,.15);flex-shrink:0;display:inline-block;vertical-align:middle;margin-right:3px}
+
+  /* SEASON */
+  .season-row{display:flex;gap:7px;flex-wrap:wrap}
+  .season-chip{padding:7px 13px;border-radius:20px;border:1.5px solid var(--border);font-size:13px;color:var(--text2);cursor:pointer;background:var(--surface);transition:all .15s}
+  .season-chip.selected{background:#0A0F1E;border-color:#0A0F1E;color:#60A5FA}
+
+  /* DETAIL */
+  .detail-img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:var(--radius);margin-bottom:16px;max-height:260px;background:var(--surface2)}
+  .detail-img-placeholder{width:100%;height:140px;border-radius:var(--radius);margin-bottom:16px;background:linear-gradient(135deg,#DDEAF8,#BFDBFE);display:flex;align-items:center;justify-content:center;font-size:60px}
+  .detail-name{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;letter-spacing:.2px}
+  .detail-meta{display:flex;align-items:center;gap:8px;margin:8px 0 16px;flex-wrap:wrap}
+  .detail-tag{font-size:12px;padding:4px 10px;border-radius:10px;background:var(--surface2);color:var(--accent);font-weight:500;border:1px solid var(--border)}
+  .detail-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);font-size:14px}
+  .detail-row-label{color:var(--text3)}
+  .detail-row-val{font-weight:500;color:var(--text)}
+  .detail-notes{background:var(--surface2);border-radius:var(--radius-sm);padding:12px;font-size:14px;line-height:1.6;color:var(--text2);margin-top:12px}
+  .detail-actions{display:flex;gap:10px;margin-top:20px}
+  .btn-primary{flex:1;padding:14px;border-radius:var(--radius-sm);background:var(--accent);color:#fff;border:none;font-size:15px;font-weight:600;cursor:pointer;letter-spacing:.2px}
+  .btn-primary:active{background:var(--accent2)}
+  .btn-danger{padding:14px 20px;border-radius:var(--radius-sm);background:transparent;color:var(--danger);border:1.5px solid var(--danger);font-size:15px;font-weight:500;cursor:pointer}
+  .btn-secondary{flex:1;padding:14px;border-radius:var(--radius-sm);background:#0A0F1E;color:#fff;border:none;font-size:15px;font-weight:500;cursor:pointer}
+
+  /* OUTFIT BUILDER */
+  .outfit-slots-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+  .outfit-slot{aspect-ratio:1;border-radius:var(--radius-sm);background:var(--surface2);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:24px;position:relative;overflow:hidden}
+  .outfit-slot.filled{border-style:solid;border-color:var(--accent)}
+  .outfit-slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .outfit-slot-x{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;z-index:2}
+
+  /* PICKER */
+  .picker-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;max-height:320px;overflow-y:auto}
+  .picker-item{border-radius:var(--radius-sm);overflow:hidden;cursor:pointer;position:relative;aspect-ratio:1;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;border:2px solid transparent}
+  .picker-item img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .picker-item.selected{border-color:var(--accent)}
+  .picker-item-name{font-size:10px;text-align:center;padding:3px 2px;color:var(--text2);position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,.85)}
+
+  /* SETTINGS */
+  .settings-section{background:var(--surface);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;box-shadow:0 2px 8px var(--shadow)}
+  .settings-row{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:14px;cursor:pointer}
+  .settings-row:last-child{border-bottom:none}
+  .settings-row:active{background:var(--surface2)}
+  .settings-row-label{font-weight:500;color:var(--text)}
+  .settings-row-sub{font-size:12px;color:var(--text3);margin-top:2px}
+  .custom-cat-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+  .custom-cat-item:last-child{border-bottom:none}
+
+  /* FILTER */
+  #filter-panel{background:var(--surface);border-radius:var(--radius);padding:14px;margin-bottom:12px;box-shadow:0 2px 8px var(--shadow)}
+  .filter-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .filter-row:last-child{margin-bottom:0}
+  .filter-label{font-size:12px;color:var(--text3);font-weight:500;min-width:52px}
+
+  /* FAB + TOAST */
+  .fab{position:fixed;bottom:calc(var(--nav-h)+16px);right:16px;width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 20px var(--shadow2);z-index:50;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+  .fab:active{transform:scale(.93)}
+  #toast{position:fixed;bottom:calc(var(--nav-h)+80px);left:50%;transform:translateX(-50%);background:#0A0F1E;color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:500;z-index:200;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;white-space:nowrap}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="header">
+    <div id="header-title">Můj <span>Šatník</span></div>
+    <div style="display:flex;gap:8px">
+      <button class="header-btn" id="filter-btn" style="display:none" onclick="toggleFilter()">🔍</button>
+      <button class="header-btn" id="view-btn" style="display:none" onclick="toggleView()">⊞</button>
+    </div>
+  </div>
+
+  <div id="content">
+
+    <!-- ŠATNÍK -->
+    <div class="page active" id="page-wardrobe">
+      <div id="filter-panel" style="display:none">
+        <div class="filter-row">
+          <span class="filter-label">Barva</span>
+          <div style="display:flex;gap:6px;overflow-x:auto;flex:1;scrollbar-width:none;padding-bottom:2px">
+            <div onclick="setFilter('color',null)" style="width:26px;height:26px;border-radius:50%;background:var(--surface2);border:2px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0">✕</div>
+            <div class="color-option" style="background:#222" data-color="Černá" onclick="setFilter('color','Černá')"></div>
+            <div class="color-option" style="background:#f5f5f5;border-color:#ccc" data-color="Bílá" onclick="setFilter('color','Bílá')"></div>
+            <div class="color-option" style="background:#888" data-color="Šedá" onclick="setFilter('color','Šedá')"></div>
+            <div class="color-option" style="background:#c0392b" data-color="Červená" onclick="setFilter('color','Červená')"></div>
+            <div class="color-option" style="background:#2980b9" data-color="Modrá" onclick="setFilter('color','Modrá')"></div>
+            <div class="color-option" style="background:#27ae60" data-color="Zelená" onclick="setFilter('color','Zelená')"></div>
+            <div class="color-option" style="background:#f39c12" data-color="Žlutá" onclick="setFilter('color','Žlutá')"></div>
+            <div class="color-option" style="background:#e67e22" data-color="Oranžová" onclick="setFilter('color','Oranžová')"></div>
+            <div class="color-option" style="background:#9b59b6" data-color="Fialová" onclick="setFilter('color','Fialová')"></div>
+            <div class="color-option" style="background:#e91e8c" data-color="Růžová" onclick="setFilter('color','Růžová')"></div>
+            <div class="color-option" style="background:#C8A87E" data-color="Béžová" onclick="setFilter('color','Béžová')"></div>
+            <div class="color-option" style="background:#5d4037" data-color="Hnědá" onclick="setFilter('color','Hnědá')"></div>
+          </div>
+        </div>
+        <div class="filter-row">
+          <span class="filter-label">Sezóna</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;flex:1">
+            <span class="cat-chip" style="padding:5px 11px;font-size:12px" onclick="setFilter('season',null)">Vše</span>
+            <span class="cat-chip" style="padding:5px 11px;font-size:12px" onclick="setFilter('season','Jaro')">🌸 Jaro</span>
+            <span class="cat-chip" style="padding:5px 11px;font-size:12px" onclick="setFilter('season','Léto')">☀️ Léto</span>
+            <span class="cat-chip" style="padding:5px 11px;font-size:12px" onclick="setFilter('season','Podzim')">🍂 Podzim</span>
+            <span class="cat-chip" style="padding:5px 11px;font-size:12px" onclick="setFilter('season','Zima')">❄️ Zima</span>
+          </div>
+        </div>
+      </div>
+      <div class="cat-scroll" id="parent-cat-row"></div>
+      <div class="subcat-scroll" id="subcat-row" style="display:none"></div>
+      <div class="clothes-grid" id="wardrobe-grid"></div>
+      <div id="wardrobe-empty" class="empty-state" style="display:none">
+        <div class="empty-icon">👗</div>
+        <h3>Šatník je prázdný</h3>
+        <p>Přidej svůj první kus oblečení kliknutím na + níže.</p>
+      </div>
+    </div>
+
+    <!-- OUTFITY -->
+    <div class="page" id="page-outfits">
+      <div class="section-head">
+        <div><div class="section-title">Moje outfity</div><div class="section-sub" id="outfit-count">0 outfitů</div></div>
+        <button class="small-btn" onclick="openOutfitBuilder()">+ Nový</button>
+      </div>
+      <div id="outfits-list"></div>
+      <div id="outfits-empty" class="empty-state" style="display:none">
+        <div class="empty-icon">✨</div><h3>Zatím žádné outfity</h3><p>Poskládej outfit z kusů ve šatníku!</p>
+      </div>
+    </div>
+
+    <!-- STATISTIKY -->
+    <div class="page" id="page-stats">
+      <div class="section-title" style="margin-bottom:16px;font-size:20px">Přehled šatníku</div>
+      <div class="stats-row" id="stats-cards"></div>
+      <div style="background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:16px;box-shadow:0 2px 8px var(--shadow)">
+        <div class="section-title" style="font-size:16px;margin-bottom:14px">Kategorie</div>
+        <div id="stats-bars"></div>
+      </div>
+      <div style="background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:16px;box-shadow:0 2px 8px var(--shadow)">
+        <div class="section-title" style="font-size:16px;margin-bottom:14px">Nejnošenější</div>
+        <div class="top-worn-row" id="top-worn"></div>
+        <div id="top-worn-empty" style="display:none;font-size:13px;color:var(--text3)">Zatím žádné záznamy nošení.</div>
+      </div>
+      <div style="background:var(--surface);border-radius:var(--radius);padding:16px;box-shadow:0 2px 8px var(--shadow)">
+        <div class="section-title" style="font-size:16px;margin-bottom:12px">Celková hodnota</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:32px;color:#0A0F1E;font-weight:600" id="total-value">0 Kč</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px">z položek s vyplněnou cenou</div>
+      </div>
+    </div>
+
+    <!-- WISHLIST -->
+    <div class="page" id="page-wishlist">
+      <div class="section-head">
+        <div><div class="section-title">Wishlist</div><div class="section-sub" id="wish-count">0 položek</div></div>
+        <button class="small-btn" onclick="openWishModal()">+ Přidat</button>
+      </div>
+      <div id="wishlist-items"></div>
+      <div id="wishlist-empty" class="empty-state" style="display:none">
+        <div class="empty-icon">🛍️</div><h3>Wishlist je prázdný</h3><p>Přidej si sem věci, které chceš koupit!</p>
+      </div>
+    </div>
+
+    <!-- NASTAVENÍ -->
+    <div class="page" id="page-settings">
+      <div class="section-title" style="margin-bottom:16px;font-size:20px">Nastavení</div>
+      <div class="settings-section">
+        <div class="settings-row" onclick="openCustomCatModal()">
+          <div><div class="settings-row-label">➕ Přidat vlastní kategorii</div><div class="settings-row-sub">Vytvoř novou podkategorii v libovolné skupině</div></div>
+          <span style="color:var(--text3)">›</span>
+        </div>
+        <div class="settings-row" onclick="openManageCatsModal()">
+          <div><div class="settings-row-label">📋 Spravovat vlastní kategorie</div><div class="settings-row-sub">Zobrazit a mazat vlastní kategorie</div></div>
+          <span style="color:var(--text3)">›</span>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-row" onclick="exportData()">
+          <div><div class="settings-row-label">📤 Exportovat zálohu</div><div class="settings-row-sub">Stáhnout vše jako soubor JSON</div></div>
+          <span style="color:var(--text3)">›</span>
+        </div>
+        <div class="settings-row" onclick="document.getElementById('import-input').click()">
+          <div><div class="settings-row-label">📥 Importovat zálohu</div><div class="settings-row-sub">Obnovit data ze souboru</div></div>
+          <span style="color:var(--text3)">›</span>
+        </div>
+        <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(this)">
+      </div>
+      <div class="settings-section">
+        <div class="settings-row" onclick="clearData()">
+          <div><div class="settings-row-label" style="color:var(--danger)">🗑️ Vymazat vše</div><div class="settings-row-sub">Smazat celý šatník a data</div></div>
+          <span style="color:var(--text3)">›</span>
+        </div>
+      </div>
+      <div style="text-align:center;padding:24px 0;font-size:12px;color:var(--text3)">Můj Šatník • Data jsou uložena v tvém telefonu</div>
+    </div>
+
+  </div>
+
+  <nav id="nav">
+    <button class="nav-btn active" onclick="showPage('wardrobe',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l1-5h3l2 3h6l2-3h3l1 5M3 9l1 11h16l1-11M3 9h18"/></svg>
+      <span>Šatník</span>
+    </button>
+    <button class="nav-btn" onclick="showPage('outfits',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
+      <span>Outfity</span>
+    </button>
+    <button class="nav-btn" onclick="showPage('stats',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      <span>Statistiky</span>
+    </button>
+    <button class="nav-btn" onclick="showPage('wishlist',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+      <span>Wishlist</span>
+    </button>
+    <button class="nav-btn" onclick="showPage('settings',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      <span>Nastavení</span>
+    </button>
+  </nav>
+</div>
+
+<button class="fab" id="fab" onclick="handleFab()">＋</button>
+<div id="toast"></div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay hidden" id="modal-add">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="add-modal-title">Přidat oblečení</div>
+    <div class="photo-upload" id="photo-upload-area" onclick="document.getElementById('pht-gallery').click()">
+      <div class="photo-upload-icon">📸</div>
+      <div class="photo-upload-text">Klepni pro výběr fotky</div>
+    </div>
+    <div class="photo-btns">
+      <button class="photo-btn" onclick="document.getElementById('pht-camera').click()">📷 Fotit</button>
+      <button class="photo-btn" onclick="document.getElementById('pht-gallery').click()">🖼️ Galerie</button>
+    </div>
+    <input type="file" id="pht-gallery" accept="image/*" onchange="handlePhoto(this)" style="display:none">
+    <input type="file" id="pht-camera" accept="image/*" capture="environment" onchange="handlePhoto(this)" style="display:none">
+    <div class="form-group">
+      <label class="form-label">Název *</label>
+      <input class="form-input" id="item-name" placeholder="např. Bílé tričko Zara">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Hlavní kategorie *</label>
+      <select class="form-select" id="item-parent-cat" onchange="updateSubcatPicker()"></select>
+    </div>
+    <div class="form-group" id="subcat-picker-group" style="display:none">
+      <label class="form-label">Podkategorie <span style="text-transform:none;letter-spacing:0;font-weight:400">(lze vybrat více)</span></label>
+      <div class="subcat-picker" id="subcat-picker-chips"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Barva</label>
+      <div class="color-row" id="color-picker">
+        <div class="color-option" style="background:#222" data-color="Černá" onclick="selectColor(this)"></div>
+        <div class="color-option" style="background:#f5f5f5;border-color:#ddd" data-color="Bílá" onclick="selectColor(this)"></div>
+        <div class="color-option" style="background:#888" data-color="Šedá" onclick="selectColor(this)"></div>
+        <div class="color-option" style="background:#c0392b" data-color="Červená" onclick="selectColor(this)"></div>
+        <div class="color-option" style="background:#2980b9" data-color="Modrá" onclick="selectColor(this)"></div>
+        <div class="color-option" style="background:#27ae60" data-color="Zelená" onclick="selectColor(this)"></div>
+        <div class="color-option" style="background:#f39c12" data-color="Žlutá" onclick="selectColor(this)"></div>
+        <div class="color-option" style="background:#e67e22" data-color="Oranžová" onclick="selectColor(this)"></div>
+        <div class="color-option" style="background:#9b59b6" data-color="Fialová" onclick="selectColor(this)"></div>
+        <div class="color-option" style="background:#e91e8c" data-color="Růžová" onclick="selectColor(this)"></div>
+        <div class="color-option" style="background:#C8A87E" data-color="Béžová" onclick="selectColor(this)"></div>
+        <div class="color-option" style="background:#5d4037" data-color="Hnědá" onclick="selectColor(this)"></div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Sezóna</label>
+      <div class="season-row">
+        <span class="season-chip" data-season="Jaro" onclick="toggleSeason(this)">🌸 Jaro</span>
+        <span class="season-chip" data-season="Léto" onclick="toggleSeason(this)">☀️ Léto</span>
+        <span class="season-chip" data-season="Podzim" onclick="toggleSeason(this)">🍂 Podzim</span>
+        <span class="season-chip" data-season="Zima" onclick="toggleSeason(this)">❄️ Zima</span>
+        <span class="season-chip" data-season="Celoroční" onclick="toggleSeason(this)">🌍 Celý rok</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Kde koupeno</label>
+      <input class="form-input" id="item-store" placeholder="např. Zara, H&M...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Cena (Kč)</label>
+      <input class="form-input" id="item-price" type="number" placeholder="0">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Poznámky</label>
+      <textarea class="form-textarea" id="item-notes" placeholder="Péče, kombinace, vzpomínky..."></textarea>
+    </div>
+    <div class="detail-actions">
+      <button class="btn-secondary" onclick="closeModal('modal-add')">Zrušit</button>
+      <button class="btn-primary" onclick="saveItem()">Uložit</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay hidden" id="modal-detail">
+  <div class="modal-sheet" id="detail-sheet"></div>
+</div>
+
+<!-- OUTFIT BUILDER -->
+<div class="modal-overlay hidden" id="modal-outfit">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Nový outfit</div>
+    <div class="form-group">
+      <label class="form-label">Název outfitu</label>
+      <input class="form-input" id="outfit-name" placeholder="např. Casual Monday">
+    </div>
+    <label class="form-label" style="margin-bottom:10px;display:block">Vyber kusy (klepni pro přidání)</label>
+    <div class="outfit-slots-grid" id="outfit-slots">
+      <div class="outfit-slot" id="slot-0" onclick="openPicker(0)">+<div style="position:absolute;bottom:4px;font-size:9px;color:var(--text3)">Kus 1</div></div>
+      <div class="outfit-slot" id="slot-1" onclick="openPicker(1)">+<div style="position:absolute;bottom:4px;font-size:9px;color:var(--text3)">Kus 2</div></div>
+      <div class="outfit-slot" id="slot-2" onclick="openPicker(2)">+<div style="position:absolute;bottom:4px;font-size:9px;color:var(--text3)">Kus 3</div></div>
+      <div class="outfit-slot" id="slot-3" onclick="openPicker(3)">+<div style="position:absolute;bottom:4px;font-size:9px;color:var(--text3)">Kus 4</div></div>
+      <div class="outfit-slot" id="slot-4" onclick="openPicker(4)">+<div style="position:absolute;bottom:4px;font-size:9px;color:var(--text3)">Kus 5</div></div>
+      <div class="outfit-slot" id="slot-5" onclick="openPicker(5)">+<div style="position:absolute;bottom:4px;font-size:9px;color:var(--text3)">Kus 6</div></div>
+    </div>
+    <div class="detail-actions">
+      <button class="btn-secondary" onclick="closeModal('modal-outfit')">Zrušit</button>
+      <button class="btn-primary" onclick="saveOutfit()">Uložit outfit</button>
+    </div>
+  </div>
+</div>
+
+<!-- PICKER -->
+<div class="modal-overlay hidden" id="modal-picker">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Vyber kus oblečení</div>
+    <div class="picker-grid" id="picker-grid"></div>
+    <button class="btn-secondary" style="width:100%;margin-top:16px" onclick="closeModal('modal-picker')">Zrušit</button>
+  </div>
+</div>
+
+<!-- WISHLIST ADD -->
+<div class="modal-overlay hidden" id="modal-wish">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Přidat do wishlistu</div>
+    <div class="form-group"><label class="form-label">Název *</label><input class="form-input" id="wish-name" placeholder="např. Béžový kabát"></div>
+    <div class="form-group"><label class="form-label">Kategorie</label><select class="form-select" id="wish-cat-sel"></select></div>
+    <div class="form-group"><label class="form-label">Odhadovaná cena (Kč)</label><input class="form-input" id="wish-price" type="number" placeholder="0"></div>
+    <div class="form-group"><label class="form-label">Odkaz / poznámka</label><input class="form-input" id="wish-note" placeholder="URL nebo poznámka..."></div>
+    <div class="detail-actions">
+      <button class="btn-secondary" onclick="closeModal('modal-wish')">Zrušit</button>
+      <button class="btn-primary" onclick="saveWish()">Přidat</button>
+    </div>
+  </div>
+</div>
+
+<!-- CUSTOM CAT MODAL -->
+<div class="modal-overlay hidden" id="modal-custom-cat">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Nová kategorie</div>
+    <div class="form-group"><label class="form-label">Název kategorie *</label><input class="form-input" id="new-cat-name" placeholder="např. Overaly, Kimona..."></div>
+    <div class="form-group">
+      <label class="form-label">Emoji ikona</label>
+      <input class="form-input" id="new-cat-emoji" placeholder="👗" maxlength="4" style="font-size:24px;text-align:center">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Patří pod skupinu</label>
+      <select class="form-select" id="new-cat-parent"></select>
+    </div>
+    <div class="detail-actions">
+      <button class="btn-secondary" onclick="closeModal('modal-custom-cat')">Zrušit</button>
+      <button class="btn-primary" onclick="saveCustomCat()">Vytvořit</button>
+    </div>
+  </div>
+</div>
+
+<!-- MANAGE CATS MODAL -->
+<div class="modal-overlay hidden" id="modal-manage-cats">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Vlastní kategorie</div>
+    <div id="manage-cats-list"></div>
+    <button class="btn-secondary" style="width:100%;margin-top:16px" onclick="closeModal('modal-manage-cats')">Zavřít</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// CATEGORY DEFINITIONS
+// ══════════════════════════════════════════
+const DEFAULT_CATEGORIES = [
+  // HLAVNÍ SKUPINY
+  {id:'top',         label:'Vrchní díly',          emoji:'👕', parentId:null},
+  {id:'bottom',      label:'Spodní díly',           emoji:'👖', parentId:null},
+  {id:'dress',       label:'Šaty & overaly',        emoji:'👗', parentId:null},
+  {id:'outer',       label:'Svrchní oblečení',      emoji:'🧥', parentId:null},
+  {id:'shoes',       label:'Boty',                  emoji:'👟', parentId:null},
+  {id:'accessories', label:'Doplňky',               emoji:'👜', parentId:null},
+  {id:'underwear',   label:'Spodní prádlo & pyžama',emoji:'🩱', parentId:null},
+  {id:'sport',       label:'Sportovní',             emoji:'🏋️', parentId:null},
+
+  // VRCHNÍ DÍLY
+  {id:'top_tricka',   label:'Trička',         emoji:'👕', parentId:'top'},
+  {id:'top_halenky',  label:'Halenky',        emoji:'👚', parentId:'top'},
+  {id:'top_kosile',   label:'Košile',         emoji:'👔', parentId:'top'},
+  {id:'top_saka',     label:'Saka',           emoji:'🥼', parentId:'top'},
+  {id:'top_svetry',   label:'Svetry & mikiny',emoji:'🧶', parentId:'top'},
+  {id:'top_bundy',    label:'Bundy lehké',    emoji:'🫧', parentId:'top'},
+  {id:'top_kabaty',   label:'Kabáty',         emoji:'🧥', parentId:'top'},
+  {id:'top_svetriky', label:'Lehké svetříky', emoji:'🎀', parentId:'top'},
+
+  // SPODNÍ DÍLY
+  {id:'bot_sukne',    label:'Sukně',           emoji:'👗', parentId:'bottom'},
+  {id:'bot_dziny',    label:'Džíny',           emoji:'👖', parentId:'bottom'},
+  {id:'bot_platene',  label:'Plátěné kalhoty', emoji:'🩳', parentId:'bottom'},
+
+  // ŠATY
+  {id:'dress_letni',  label:'Šaty letní',   emoji:'🌸', parentId:'dress'},
+  {id:'dress_zimni',  label:'Šaty zimní',   emoji:'❄️', parentId:'dress'},
+  {id:'dress_podzim', label:'Šaty podzimní',emoji:'🍂', parentId:'dress'},
+  {id:'dress_overal', label:'Overaly',      emoji:'👗', parentId:'dress'},
+
+  // SVRCHNÍ OBLEČENÍ
+  {id:'outer_bundy',  label:'Zimní bundy',emoji:'🧥', parentId:'outer'},
+  {id:'outer_kabaty', label:'Kabáty',     emoji:'🪄', parentId:'outer'},
+  {id:'outer_vesty',  label:'Vesty',      emoji:'🦺', parentId:'outer'},
+
+  // BOTY
+  {id:'shoes_podpatek',label:'Boty na podpatku',emoji:'👠', parentId:'shoes'},
+  {id:'shoes_tenisky', label:'Tenisky',         emoji:'👟', parentId:'shoes'},
+  {id:'shoes_podzimni',label:'Podzimní boty',   emoji:'🥾', parentId:'shoes'},
+  {id:'shoes_letni',   label:'Letní boty',      emoji:'🩴', parentId:'shoes'},
+  {id:'shoes_cizmy',   label:'Čižmy & kozačky', emoji:'🥿', parentId:'shoes'},
+
+  // DOPLŇKY
+  {id:'acc_sperky',   label:'Šperky',  emoji:'💍', parentId:'accessories'},
+  {id:'acc_kabelky',  label:'Kabelky', emoji:'👜', parentId:'accessories'},
+  {id:'acc_ostatni',  label:'Ostatní', emoji:'🎒', parentId:'accessories'},
+];
+
+// ══════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════
+let wardrobe   = JSON.parse(localStorage.getItem('wardrobe_v2')   || '[]');
+let outfits    = JSON.parse(localStorage.getItem('outfits_v2')    || '[]');
+let wishlist   = JSON.parse(localStorage.getItem('wishlist_v2')   || '[]');
+let customCats = JSON.parse(localStorage.getItem('customCats_v2') || '[]');
+
+const allCats    = () => [...DEFAULT_CATEGORIES, ...customCats];
+const parentCats = () => allCats().filter(c => !c.parentId);
+const subCats    = pid => allCats().filter(c => c.parentId === pid);
+const catById    = id => allCats().find(c => c.id === id) || {id, label:id, emoji:'👗'};
+
+function save() {
+  localStorage.setItem('wardrobe_v2',   JSON.stringify(wardrobe));
+  localStorage.setItem('outfits_v2',    JSON.stringify(outfits));
+  localStorage.setItem('wishlist_v2',   JSON.stringify(wishlist));
+  localStorage.setItem('customCats_v2', JSON.stringify(customCats));
+}
+
+const SEASON_COLORS = {'Jaro':'#a8d8a8','Léto':'#f9ca74','Podzim':'#d4956a','Zima':'#90b4ce','Celoroční':'#b5aac8'};
+const COLOR_HEX = {'Černá':'#222','Bílá':'#f5f5f5','Šedá':'#888','Červená':'#c0392b','Modrá':'#2980b9','Zelená':'#27ae60','Žlutá':'#f39c12','Oranžová':'#e67e22','Fialová':'#9b59b6','Růžová':'#e91e8c','Béžová':'#C8A87E','Hnědá':'#5d4037'};
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let currentPage    = 'wardrobe';
+let activeParentId = 'all';
+let activeSubId    = null;
+let isListView     = false;
+let filterColor    = null;
+let filterSeason   = null;
+let editingId      = null;
+let currentPhoto   = null;
+let selectedSeasons= [];
+let selectedColor  = null;
+let selectedSubcats= [];
+let outfitSlots    = [null,null,null,null,null,null];
+let currentSlot    = 0;
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+function showPage(page, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  btn.classList.add('active');
+  currentPage = page;
+  const fab = document.getElementById('fab');
+  const fb  = document.getElementById('filter-btn');
+  const vb  = document.getElementById('view-btn');
+  fab.style.display = page==='wardrobe' ? 'flex' : 'none';
+  fb.style.display  = page==='wardrobe' ? 'flex' : 'none';
+  vb.style.display  = page==='wardrobe' ? 'flex' : 'none';
+  if(page==='wardrobe')  renderWardrobe();
+  if(page==='outfits')   renderOutfits();
+  if(page==='stats')     renderStats();
+  if(page==='wishlist')  renderWishlist();
+}
+function handleFab() { if(currentPage==='wardrobe') openAddModal(); }
+
+// ══════════════════════════════════════════
+// CATEGORY ROWS RENDER
+// ══════════════════════════════════════════
+function renderCatRow() {
+  const row = document.getElementById('parent-cat-row');
+  row.innerHTML =
+    `<span class="cat-chip ${activeParentId==='all'?'active':''}" onclick="selectParent('all',this)">Vše</span>` +
+    parentCats().map(p =>
+      `<span class="cat-chip ${activeParentId===p.id?(activeSubId?'parent-active':'active'):''}" onclick="selectParent('${p.id}',this)">${p.emoji} ${p.label}</span>`
+    ).join('');
+}
+
+function renderSubRow() {
+  const row = document.getElementById('subcat-row');
+  if (activeParentId==='all') { row.style.display='none'; return; }
+  const subs = subCats(activeParentId);
+  if (!subs.length) { row.style.display='none'; return; }
+  row.style.display = 'flex';
+  row.innerHTML =
+    `<span class="subcat-chip ${!activeSubId?'active':''}" onclick="selectSub(null,this)">↩ Vše</span>` +
+    subs.map(s =>
+      `<span class="subcat-chip ${activeSubId===s.id?'active':''}" onclick="selectSub('${s.id}',this)">${s.emoji} ${s.label}</span>`
+    ).join('');
+}
+
+function selectParent(id, el) {
+  activeParentId=id; activeSubId=null;
+  renderCatRow(); renderSubRow(); renderGrid();
+}
+function selectSub(id, el) {
+  activeSubId=id; renderSubRow(); renderGrid();
+}
+
+// ══════════════════════════════════════════
+// WARDROBE RENDER
+// ══════════════════════════════════════════
+function renderWardrobe() {
+  renderCatRow(); renderSubRow(); renderGrid();
+}
+
+function renderGrid() {
+  let items = wardrobe;
+
+  if (activeParentId !== 'all') {
+    if (activeSubId) {
+      // exact subcat match
+      items = items.filter(i => i.subcats && i.subcats.includes(activeSubId));
+    } else {
+      // any item whose parentCat matches, OR has a subcat under this parent
+      const childIds = subCats(activeParentId).map(s => s.id);
+      items = items.filter(i =>
+        i.parentCat === activeParentId ||
+        (i.subcats && i.subcats.some(s => childIds.includes(s)))
+      );
+    }
+  }
+  if (filterColor)  items = items.filter(i => i.color===filterColor);
+  if (filterSeason) items = items.filter(i => i.seasons && i.seasons.includes(filterSeason));
+
+  const grid  = document.getElementById('wardrobe-grid');
+  const empty = document.getElementById('wardrobe-empty');
+
+  if (!items.length) { grid.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+
+  grid.innerHTML = items.map(item => {
+    const parent = catById(item.parentCat);
+    const firstSub = item.subcats&&item.subcats.length ? catById(item.subcats[0]) : null;
+    const sdot = item.seasons&&item.seasons.length ? `<div class="cloth-season-dot" style="background:${SEASON_COLORS[item.seasons[0]]||'#ccc'}"></div>` : '';
+    const worn = item.wornCount>0 ? `<div class="cloth-worn">${item.wornCount}×</div>` : '';
+    const img  = item.photo
+      ? `<img class="cloth-img" src="${item.photo}" loading="lazy">`
+      : `<div class="cloth-img-placeholder">${parent.emoji}</div>`;
+    const cdot = item.color ? `<span class="color-dot" style="background:${COLOR_HEX[item.color]||'#ccc'}"></span>` : '';
+    const subLabel = firstSub ? firstSub.label : parent.label;
+    return `<div class="cloth-card" onclick="openDetail('${item.id}')">${img}${sdot}${worn}
+      <div class="cloth-info"><div class="cloth-name">${item.name}</div><div class="cloth-cat">${cdot}${subLabel}</div></div>
+    </div>`;
+  }).join('');
+
+  if(isListView) grid.classList.add('list-view');
+  else grid.classList.remove('list-view');
+}
+
+function toggleView() {
+  isListView=!isListView;
+  document.getElementById('view-btn').textContent = isListView ? '⊟' : '⊞';
+  renderGrid();
+}
+function toggleFilter() {
+  const p=document.getElementById('filter-panel');
+  p.style.display = p.style.display==='none' ? 'block' : 'none';
+}
+function setFilter(type,val) {
+  if(type==='color')  filterColor=val;
+  if(type==='season') filterSeason=val;
+  renderGrid();
+}
+
+// ══════════════════════════════════════════
+// ADD / EDIT ITEM
+// ══════════════════════════════════════════
+function populateParentSelect(selId, val) {
+  document.getElementById(selId).innerHTML =
+    parentCats().map(p => `<option value="${p.id}" ${p.id===val?'selected':''}>${p.emoji} ${p.label}</option>`).join('');
+}
+
+function openAddModal(id) {
+  editingId=id||null; currentPhoto=null; selectedSeasons=[]; selectedColor=null; selectedSubcats=[];
+  document.getElementById('add-modal-title').textContent = id ? 'Upravit oblečení' : 'Přidat oblečení';
+  ['item-name','item-store','item-price','item-notes'].forEach(f => document.getElementById(f).value='');
+  document.querySelectorAll('.color-option').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.season-chip').forEach(c => c.classList.remove('selected'));
+  const area = document.getElementById('photo-upload-area');
+  area.innerHTML='<div class="photo-upload-icon">📸</div><div class="photo-upload-text">Klepni pro výběr fotky</div>';
+  populateParentSelect('item-parent-cat','top');
+
+  if (id) {
+    const item=wardrobe.find(i=>i.id===id); if(!item) return;
+    document.getElementById('item-name').value  = item.name;
+    document.getElementById('item-store').value = item.store||'';
+    document.getElementById('item-price').value = item.price||'';
+    document.getElementById('item-notes').value = item.notes||'';
+    populateParentSelect('item-parent-cat', item.parentCat||'top');
+    if(item.photo){currentPhoto=item.photo;area.innerHTML=`<img src="${item.photo}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:var(--radius)">`;}
+    if(item.color){selectedColor=item.color;document.querySelectorAll('.color-option').forEach(c=>{if(c.dataset.color===item.color)c.classList.add('selected');});}
+    if(item.seasons){selectedSeasons=[...item.seasons];document.querySelectorAll('.season-chip').forEach(c=>{if(item.seasons.includes(c.dataset.season))c.classList.add('selected');});}
+    selectedSubcats=item.subcats?[...item.subcats]:[];
+  }
+  updateSubcatPicker();
+  openModal('modal-add');
+}
+
+function updateSubcatPicker() {
+  const parentId=document.getElementById('item-parent-cat').value;
+  const subs=subCats(parentId);
+  const grp=document.getElementById('subcat-picker-group');
+  const chips=document.getElementById('subcat-picker-chips');
+  if(!subs.length){grp.style.display='none';return;}
+  grp.style.display='block';
+  chips.innerHTML=subs.map(s =>
+    `<span class="subcat-pick-chip ${selectedSubcats.includes(s.id)?'selected':''}" data-id="${s.id}" onclick="toggleSubcat(this,'${s.id}')">${s.emoji} ${s.label}</span>`
+  ).join('');
+}
+
+function toggleSubcat(el,id) {
+  el.classList.toggle('selected');
+  if(selectedSubcats.includes(id)) selectedSubcats=selectedSubcats.filter(x=>x!==id);
+  else selectedSubcats.push(id);
+}
+
+function handlePhoto(input) {
+  if(!input.files||!input.files[0])return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    currentPhoto=e.target.result;
+    document.getElementById('photo-upload-area').innerHTML=`<img src="${currentPhoto}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:var(--radius)">`;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function selectColor(el){document.querySelectorAll('.color-option').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');selectedColor=el.dataset.color;}
+function toggleSeason(el){const s=el.dataset.season;el.classList.toggle('selected');if(selectedSeasons.includes(s))selectedSeasons=selectedSeasons.filter(x=>x!==s);else selectedSeasons.push(s);}
+
+function saveItem() {
+  const name=document.getElementById('item-name').value.trim();
+  if(!name){showToast('Zadej prosím název.');return;}
+  const parentCat=document.getElementById('item-parent-cat').value;
+  const item={
+    id:editingId||Date.now().toString(), name, parentCat,
+    subcats:[...selectedSubcats], color:selectedColor,
+    seasons:[...selectedSeasons],
+    store:document.getElementById('item-store').value.trim(),
+    price:parseFloat(document.getElementById('item-price').value)||0,
+    notes:document.getElementById('item-notes').value.trim(),
+    photo:currentPhoto, wornCount:0, addedAt:new Date().toISOString()
+  };
+  if(editingId){const idx=wardrobe.findIndex(i=>i.id===editingId);if(idx>-1){item.wornCount=wardrobe[idx].wornCount||0;wardrobe[idx]=item;}}
+  else wardrobe.unshift(item);
+  save();closeModal('modal-add');renderWardrobe();showToast(editingId?'Změny uloženy ✓':'Přidáno do šatníku ✓');
+}
+
+// ══════════════════════════════════════════
+// DETAIL
+// ══════════════════════════════════════════
+function openDetail(id) {
+  const item=wardrobe.find(i=>i.id===id);if(!item)return;
+  const parent=catById(item.parentCat);
+  const subcatTags=(item.subcats||[]).map(s=>`<span class="detail-tag">${catById(s).emoji} ${catById(s).label}</span>`).join('');
+  const cdot=item.color?`<span class="color-dot" style="background:${COLOR_HEX[item.color]||'#ccc'}"></span>`:'';
+  document.getElementById('detail-sheet').innerHTML=`
+    <div class="modal-handle"></div>
+    ${item.photo?`<img class="detail-img" src="${item.photo}">`:`<div class="detail-img-placeholder">${parent.emoji}</div>`}
+    <div class="detail-name">${item.name}</div>
+    <div class="detail-meta">
+      <span class="detail-tag">${parent.emoji} ${parent.label}</span>
+      ${subcatTags}
+      ${item.color?`<span class="detail-tag">${cdot}${item.color}</span>`:''}
+      ${(item.seasons||[]).map(s=>`<span class="detail-tag">${s}</span>`).join('')}
+    </div>
+    ${item.store?`<div class="detail-row"><span class="detail-row-label">Kde koupeno</span><span class="detail-row-val">${item.store}</span></div>`:''}
+    ${item.price?`<div class="detail-row"><span class="detail-row-label">Cena</span><span class="detail-row-val">${item.price.toLocaleString('cs')} Kč</span></div>`:''}
+    <div class="detail-row"><span class="detail-row-label">Počet nošení</span><span class="detail-row-val">${item.wornCount}×</span></div>
+    ${item.notes?`<div class="detail-notes">${item.notes}</div>`:''}
+    <div class="detail-actions">
+      <button class="btn-secondary" onclick="wearItem('${item.id}')">👗 Oblékla jsem</button>
+      <button class="btn-primary" onclick="closeModal('modal-detail');openAddModal('${item.id}')">Upravit</button>
+      <button class="btn-danger" onclick="deleteItem('${item.id}')">🗑</button>
+    </div>
+    <button class="btn-secondary" style="width:100%;margin-top:10px" onclick="closeModal('modal-detail')">Zavřít</button>`;
+  openModal('modal-detail');
+}
+
+function wearItem(id) {
+  const item=wardrobe.find(i=>i.id===id);if(!item)return;
+  item.wornCount=(item.wornCount||0)+1;save();
+  showToast('Zaznamenaná nošení: '+item.wornCount+'×');openDetail(id);renderWardrobe();
+}
+function deleteItem(id) {
+  if(!confirm('Smazat tento kus?'))return;
+  wardrobe=wardrobe.filter(i=>i.id!==id);
+  outfits.forEach(o=>{o.items=o.items.filter(x=>x!==id);});
+  save();closeModal('modal-detail');renderWardrobe();showToast('Smazáno');
+}
+
+// ══════════════════════════════════════════
+// OUTFITS
+// ══════════════════════════════════════════
+function openOutfitBuilder(){
+  outfitSlots=[null,null,null,null,null,null];
+  document.getElementById('outfit-name').value='';
+  renderSlots();openModal('modal-outfit');
+}
+function renderSlots(){
+  for(let i=0;i<6;i++){
+    const slot=document.getElementById('slot-'+i);
+    const item=outfitSlots[i]?wardrobe.find(w=>w.id===outfitSlots[i]):null;
+    if(item){
+      slot.classList.add('filled');
+      slot.innerHTML=item.photo?`<img src="${item.photo}"><div class="outfit-slot-x" onclick="event.stopPropagation();clearSlot(${i})">✕</div>`:catById(item.parentCat).emoji+`<div class="outfit-slot-x" onclick="event.stopPropagation();clearSlot(${i})">✕</div>`;
+    }else{slot.classList.remove('filled');slot.innerHTML=`+<div style="position:absolute;bottom:4px;font-size:9px;color:var(--text3)">Kus ${i+1}</div>`;}
+  }
+}
+function clearSlot(i){outfitSlots[i]=null;renderSlots();}
+function openPicker(idx){
+  currentSlot=idx;
+  const grid=document.getElementById('picker-grid');
+  grid.innerHTML=!wardrobe.length?'<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text3)">Šatník je prázdný</div>':
+    wardrobe.map(item=>`<div class="picker-item ${outfitSlots.includes(item.id)?'selected':''}" onclick="pickItem('${item.id}')">${item.photo?`<img src="${item.photo}">`:catById(item.parentCat).emoji}<div class="picker-item-name">${item.name}</div></div>`).join('');
+  openModal('modal-picker');
+}
+function pickItem(id){outfitSlots[currentSlot]=id;closeModal('modal-picker');renderSlots();}
+function saveOutfit(){
+  const name=document.getElementById('outfit-name').value.trim()||'Outfit '+(outfits.length+1);
+  const items=outfitSlots.filter(Boolean);
+  if(!items.length){showToast('Přidej aspoň jeden kus.');return;}
+  outfits.unshift({id:Date.now().toString(),name,items,createdAt:new Date().toISOString()});
+  save();closeModal('modal-outfit');renderOutfits();showToast('Outfit uložen ✓');
+}
+function renderOutfits(){
+  const list=document.getElementById('outfits-list'),empty=document.getElementById('outfits-empty');
+  document.getElementById('outfit-count').textContent=outfits.length+' outfitů';
+  if(!outfits.length){list.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  list.innerHTML=outfits.map(o=>`
+    <div class="outfit-card">
+      <div class="outfit-title"><span>${o.name}</span><span style="font-size:12px;color:var(--text3);cursor:pointer" onclick="deleteOutfit('${o.id}')">🗑</span></div>
+      <div class="outfit-pieces">${o.items.map(id=>{const item=wardrobe.find(w=>w.id===id);if(!item)return'';return`<div class="outfit-piece">${item.photo?`<img src="${item.photo}">`:catById(item.parentCat).emoji}</div>`;}).join('')}</div>
+    </div>`).join('');
+}
+function deleteOutfit(id){outfits=outfits.filter(o=>o.id!==id);save();renderOutfits();showToast('Outfit smazán');}
+
+// ══════════════════════════════════════════
+// STATS
+// ══════════════════════════════════════════
+function renderStats(){
+  document.getElementById('stats-cards').innerHTML=`
+    <div class="stat-card"><div class="stat-num">${wardrobe.length}</div><div class="stat-label">Kusů celkem</div></div>
+    <div class="stat-card"><div class="stat-num">${outfits.length}</div><div class="stat-label">Outfitů</div></div>
+    <div class="stat-card"><div class="stat-num">${wardrobe.filter(i=>i.wornCount>0).length}</div><div class="stat-label">Nošených kusů</div></div>
+    <div class="stat-card"><div class="stat-num">${wishlist.length}</div><div class="stat-label">Wishlist</div></div>`;
+
+  const counts={};
+  parentCats().forEach(p=>{counts[p.id]=wardrobe.filter(i=>i.parentCat===p.id).length;});
+  const maxC=Math.max(...Object.values(counts),1);
+  document.getElementById('stats-bars').innerHTML=
+    Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([id,count])=>{
+      const cat=catById(id);
+      return `<div class="bar-row"><span class="bar-cat">${cat.emoji} ${cat.label}</span><div class="bar-track"><div class="bar-fill" style="width:${(count/maxC*100).toFixed(0)}%"></div></div><span class="bar-num">${count}</span></div>`;
+    }).join('');
+
+  const topWorn=[...wardrobe].filter(i=>i.wornCount>0).sort((a,b)=>b.wornCount-a.wornCount).slice(0,8);
+  const tw=document.getElementById('top-worn'),te=document.getElementById('top-worn-empty');
+  if(!topWorn.length){tw.innerHTML='';te.style.display='block';}else{
+    te.style.display='none';
+    tw.innerHTML=topWorn.map(i=>`<div class="top-worn-card"><div class="top-worn-img">${i.photo?`<img src="${i.photo}">`:catById(i.parentCat).emoji}</div><div class="top-worn-name">${i.name}</div><div class="top-worn-count">${i.wornCount}× nošeno</div></div>`).join('');
+  }
+  document.getElementById('total-value').textContent=wardrobe.reduce((s,i)=>s+(i.price||0),0).toLocaleString('cs')+' Kč';
+}
+
+// ══════════════════════════════════════════
+// WISHLIST
+// ══════════════════════════════════════════
+function openWishModal(){
+  document.getElementById('wish-name').value='';
+  document.getElementById('wish-price').value='';
+  document.getElementById('wish-note').value='';
+  document.getElementById('wish-cat-sel').innerHTML=allCats().map(c=>`<option value="${c.id}">${c.emoji} ${c.label}</option>`).join('');
+  openModal('modal-wish');
+}
+function saveWish(){
+  const name=document.getElementById('wish-name').value.trim();
+  if(!name){showToast('Zadej název.');return;}
+  wishlist.unshift({id:Date.now().toString(),name,catId:document.getElementById('wish-cat-sel').value,price:parseFloat(document.getElementById('wish-price').value)||0,note:document.getElementById('wish-note').value.trim(),done:false});
+  save();closeModal('modal-wish');renderWishlist();showToast('Přidáno na wishlist ✓');
+}
+function renderWishlist(){
+  const list=document.getElementById('wishlist-items'),empty=document.getElementById('wishlist-empty');
+  document.getElementById('wish-count').textContent=wishlist.length+' položek';
+  if(!wishlist.length){list.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  list.innerHTML=wishlist.map(w=>{const cat=catById(w.catId||'accessories');return`<div class="wish-card" style="${w.done?'opacity:.55':''}"><div class="wish-emoji">${cat.emoji}</div><div class="wish-info"><div class="wish-name" style="${w.done?'text-decoration:line-through':''}">${w.name}</div><div class="wish-detail">${cat.label}${w.note?' · '+w.note:''}</div></div>${w.price?`<div class="wish-price">${w.price.toLocaleString('cs')} Kč</div>`:''}<button class="wish-check ${w.done?'done':''}" onclick="toggleWish('${w.id}')">${w.done?'✓':'○'}</button><button style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text3)" onclick="deleteWish('${w.id}')">🗑</button></div>`;}).join('');
+}
+function toggleWish(id){const w=wishlist.find(x=>x.id===id);if(w){w.done=!w.done;save();renderWishlist();}}
+function deleteWish(id){wishlist=wishlist.filter(x=>x.id!==id);save();renderWishlist();showToast('Odstraněno');}
+
+// ══════════════════════════════════════════
+// CUSTOM CATEGORIES
+// ══════════════════════════════════════════
+function openCustomCatModal(){
+  document.getElementById('new-cat-name').value='';
+  document.getElementById('new-cat-emoji').value='';
+  document.getElementById('new-cat-parent').innerHTML=parentCats().map(p=>`<option value="${p.id}">${p.emoji} ${p.label}</option>`).join('');
+  openModal('modal-custom-cat');
+}
+function saveCustomCat(){
+  const name=document.getElementById('new-cat-name').value.trim();
+  if(!name){showToast('Zadej název kategorie.');return;}
+  const emoji=document.getElementById('new-cat-emoji').value.trim()||'🏷️';
+  const parentId=document.getElementById('new-cat-parent').value;
+  customCats.push({id:'custom_'+Date.now(),label:name,emoji,parentId});
+  save();closeModal('modal-custom-cat');showToast('"'+name+'" přidána ✓');renderWardrobe();
+}
+function openManageCatsModal(){
+  const list=document.getElementById('manage-cats-list');
+  if(!customCats.length){list.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">Zatím žádné vlastní kategorie.</div>';}
+  else{list.innerHTML=customCats.map(c=>`<div class="custom-cat-item"><span style="font-size:22px;width:32px;text-align:center">${c.emoji}</span><div style="flex:1"><div style="font-weight:500;font-size:14px">${c.label}</div><div style="font-size:12px;color:var(--text3)">pod: ${catById(c.parentId).label}</div></div><button style="background:none;border:none;color:var(--danger);font-size:18px;cursor:pointer" onclick="deleteCustomCat('${c.id}')">🗑</button></div>`).join('');}
+  openModal('modal-manage-cats');
+}
+function deleteCustomCat(id){
+  if(!confirm('Smazat kategorii? Oblečení v ní zůstane.'))return;
+  customCats=customCats.filter(c=>c.id!==id);
+  wardrobe.forEach(i=>{if(i.subcats)i.subcats=i.subcats.filter(s=>s!==id);});
+  save();openManageCatsModal();renderWardrobe();showToast('Kategorie smazána');
+}
+
+// ══════════════════════════════════════════
+// EXPORT / IMPORT
+// ══════════════════════════════════════════
+function exportData(){
+  const blob=new Blob([JSON.stringify({wardrobe,outfits,wishlist,customCats,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='satnik-zaloha.json';a.click();URL.revokeObjectURL(url);showToast('Záloha stažena ✓');
+}
+function importData(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{try{const d=JSON.parse(e.target.result);if(d.wardrobe)wardrobe=d.wardrobe;if(d.outfits)outfits=d.outfits;if(d.wishlist)wishlist=d.wishlist;if(d.customCats)customCats=d.customCats;save();renderWardrobe();showToast('Data obnovena ✓');}catch{showToast('Chyba při importu.');}};
+  reader.readAsText(file);
+}
+function clearData(){if(!confirm('Opravdu smazat vše? Tato akce je nevratná!'))return;wardrobe=[];outfits=[];wishlist=[];customCats=[];save();renderWardrobe();showToast('Vše smazáno');}
+
+// ══════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════
+function openModal(id){document.getElementById(id).classList.remove('hidden');}
+function closeModal(id){document.getElementById(id).classList.add('hidden');}
+document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.add('hidden');});});
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+
+// INIT
+renderWardrobe();
+</script>
+</body>
+</html>
