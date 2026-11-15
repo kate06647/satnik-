@@ -2,7 +2,7 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Můj Šatník">
@@ -20,17 +20,17 @@
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{width:100%;height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
-  #app{display:flex;flex-direction:column;height:100dvh;height:100vh}
-  #header{height:var(--header-h);background:#0A0F1E;border-bottom:none;display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;z-index:10}
+  #app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+  #header{height:calc(var(--header-h) + env(safe-area-inset-top, 0px));background:#0A0F1E;border-bottom:none;display:flex;align-items:center;justify-content:space-between;padding:env(safe-area-inset-top, 0px) 20px 0;flex-shrink:0;z-index:10}
   #header-title{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;letter-spacing:.5px;color:#fff}
   #header-title span{font-style:italic;color:#93C5FD}
   .header-btn{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.12);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;transition:transform .15s;color:#fff}
   .header-btn:active{transform:scale(.92)}
   #content{flex:1;overflow:hidden;position:relative}
-  .page{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:14px 14px calc(var(--nav-h)+16px);display:none;animation:fadeIn .25s ease}
+  .page{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:14px 14px calc(var(--nav-h) + 16px + env(safe-area-inset-bottom, 0px));display:none;animation:fadeIn .25s ease}
   .page.active{display:block}
   @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-  #nav{height:var(--nav-h);background:#0A0F1E;border-top:none;display:flex;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom)}
+  #nav{height:calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));background:#0A0F1E;border-top:none;display:flex;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom, 0px)}
   .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:none;background:transparent;cursor:pointer;color:rgba(255,255,255,.35);padding:8px 0;transition:color .15s}
   .nav-btn.active{color:#60A5FA}
   .nav-btn svg{width:22px;height:22px}
@@ -110,7 +110,7 @@
   /* MODAL */
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:flex-end;backdrop-filter:blur(4px);animation:fadeIn .2s ease}
   .modal-overlay.hidden{display:none}
-  .modal-sheet{background:var(--bg);border-radius:24px 24px 0 0;padding:20px 20px calc(32px + env(safe-area-inset-bottom));width:100%;max-height:92vh;overflow-y:auto;animation:slideUp .3s ease}
+  .modal-sheet{background:var(--bg);border-radius:24px 24px 0 0;padding:20px 20px calc(32px + env(safe-area-inset-bottom, 0px));width:100%;max-height:92vh;max-height:92dvh;overflow-y:auto;animation:slideUp .3s ease;-webkit-overflow-scrolling:touch}
   @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
   .modal-handle{width:40px;height:4px;border-radius:2px;background:var(--border);margin:0 auto 20px}
   .modal-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;margin-bottom:20px;color:var(--text)}
@@ -196,9 +196,10 @@
   .filter-label{font-size:12px;color:var(--text3);font-weight:500;min-width:52px}
 
   /* FAB + TOAST */
-  .fab{position:fixed;bottom:calc(var(--nav-h)+16px);right:16px;width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 20px var(--shadow2);z-index:50;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+  /* Spaces around + are required. calc(var(--nav-h)+16px) is invalid and the button drops off-screen. */
+  .fab{position:fixed;bottom:calc(var(--nav-h) + 16px + env(safe-area-inset-bottom, 0px));right:16px;width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 20px var(--shadow2);z-index:50;display:flex;align-items:center;justify-content:center;transition:transform .15s}
   .fab:active{transform:scale(.93)}
-  #toast{position:fixed;bottom:calc(var(--nav-h)+80px);left:50%;transform:translateX(-50%);background:#0A0F1E;color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:500;z-index:200;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;white-space:nowrap}
+  #toast{position:fixed;bottom:calc(var(--nav-h) + 80px + env(safe-area-inset-bottom, 0px));left:50%;transform:translateX(-50%);background:#0A0F1E;color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:500;z-index:200;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;white-space:nowrap}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
 </style>
 </head>
